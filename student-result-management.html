@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gradebook — Student Result Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   Gradebook — Student Result Management System
+   Tokens: navy #1B2340, paper #FAF7F0, gold #C9A227,
+           pass #2F6D4F, fail #B23A48, ink #23241F
+   ========================================================= */
+
+:root {
+  --navy: #1B2340;
+  --navy-light: #2C3568;
+  --paper: #FAF7F0;
+  --paper-dim: #F1ECDF;
+  --gold: #C9A227;
+  --gold-dark: #A9840F;
+  --pass: #2F6D4F;
+  --pass-bg: #E4EFE7;
+  --fail: #B23A48;
+  --fail-bg: #F6E5E6;
+  --ink: #23241F;
+  --muted: #6B6A5D;
+  --line: rgba(27, 35, 64, 0.14);
+
+  --font-display: "Source Serif 4", Georgia, serif;
+  --font-body: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --radius: 10px;
+  --max: 1180px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--paper-dim);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+h1, h2, h3 { font-family: var(--font-display); margin: 0; font-weight: 600; }
+label { font-size: 0.82rem; font-weight: 500; color: var(--navy); }
+input, select, button { font-family: inherit; }
+
+/* ---------- Topbar ---------- */
+.topbar {
+  background: var(--navy);
+  color: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+.topbar__mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: var(--gold);
+  color: var(--navy);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.topbar__brand h1 { font-size: 1.3rem; color: var(--paper); }
+.topbar__brand p { margin: 0.1rem 0 0; font-size: 0.8rem; color: #B7BEDD; }
+
+.topbar__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.topbar__meta label { color: #B7BEDD; font-size: 0.8rem; }
+.topbar__meta select {
+  background: var(--navy-light);
+  color: var(--paper);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+/* ---------- Stats strip ---------- */
+.stats {
+  max-width: var(--max);
+  margin: -1.1rem auto 0;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: flex;
+  flex-wrap: wrap;
+  box-shadow: 0 12px 28px -18px rgba(27, 35, 64, 0.35);
+  position: relative;
+  z-index: 2;
+}
+.stats__item {
+  flex: 1 1 160px;
+  padding: 1.2rem 1.5rem;
+  border-right: 1px solid var(--line);
+}
+.stats__item:last-child { border-right: none; }
+.stats__value {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--navy);
+}
+.stats__label {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 0.15rem;
+}
+
+/* ---------- Layout ---------- */
+.layout {
+  max-width: var(--max);
+  margin: 2rem auto;
+  padding: 0 1.25rem;
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 1.75rem;
+  align-items: start;
+}
+
+.panel {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.6rem;
+}
+
+.panel__head { margin-bottom: 1.3rem; }
+.panel__head h2 { font-size: 1.2rem; color: var(--navy); }
+.panel__head p { margin: 0.3rem 0 0; font-size: 0.85rem; color: var(--muted); }
+
+.panel__head--row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* ---------- Form ---------- */
+.field { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 1rem; }
+.field-row { display: flex; gap: 1rem; }
+.field-row .field { flex: 1; }
+
+input[type="text"], input[type="number"], input[type="search"] {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 0.6rem 0.7rem;
+  font-size: 0.92rem;
+  background: #fff;
+  color: var(--ink);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--gold-dark);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.22);
+}
+
+fieldset.marks-grid {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1rem 1rem 0.2rem;
+  margin: 0 0 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1rem;
+}
+fieldset.marks-grid legend {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--navy);
+  padding: 0 0.4rem;
+}
+
+.form-error {
+  background: var(--fail-bg);
+  color: var(--fail);
+  border-radius: 7px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.82rem;
+  margin: 0 0 1rem;
+}
+
+.form-actions { display: flex; gap: 0.7rem; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  border-radius: 7px;
+  padding: 0.65rem 1.2rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.btn--primary { background: var(--navy); color: var(--paper); }
+.btn--primary:hover { background: var(--navy-light); }
+.btn--ghost { background: transparent; color: var(--navy); border-color: var(--line); }
+.btn--ghost:hover { border-color: var(--navy); }
+.btn--text {
+  background: none;
+  border: none;
+  color: var(--navy);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.3rem 0.4rem;
+}
+.btn--text:hover { text-decoration: underline; }
+.btn--danger { color: var(--fail); }
+
+/* ---------- Table ---------- */
+.table-tools input[type="search"] { min-width: 220px; }
+
+.table-scroll { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+thead th {
+  text-align: left;
+  padding: 0.7rem 0.8rem;
+  border-bottom: 2px solid var(--navy);
+  color: var(--navy);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+th.col-actions, td.col-actions { cursor: default; text-align: right; }
+.sort-arrow { font-size: 0.7rem; opacity: 0.5; }
+
+tbody tr { border-bottom: 1px solid var(--line); transition: background 0.15s ease; }
+tbody tr:hover { background: var(--paper-dim); }
+tbody td { padding: 0.65rem 0.8rem; vertical-align: middle; }
+
+.badge {
+  display: inline-block;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.badge--pass { background: var(--pass-bg); color: var(--pass); }
+.badge--fail { background: var(--fail-bg); color: var(--fail); }
+
+.row-actions { display: flex; gap: 0.4rem; justify-content: flex-end; }
+
+.empty-state {
+  text-align: center;
+  color: var(--muted);
+  padding: 2.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+/* ---------- Footer ---------- */
+.footer {
+  max-width: var(--max);
+  margin: 0 auto 2.5rem;
+  padding: 0 1.25rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ---------- Modal / result slip ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(27, 35, 64, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 100;
+}
+.modal-backdrop[hidden] { display: none; }
+
+.modal {
+  background: var(--paper);
+  border-radius: var(--radius);
+  max-width: 560px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 2rem;
+  position: relative;
+}
+
+.modal__close {
+  position: absolute;
+  top: 0.9rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.slip {
+  border: 2px solid var(--navy);
+  padding: 1.6rem;
+  border-radius: 6px;
+}
+.slip__header {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+.slip__mark {
+  width: 36px; height: 36px;
+  border-radius: 6px;
+  background: var(--gold);
+  color: var(--navy);
+  font-family: var(--font-display);
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.slip__header h3 { font-size: 1.05rem; color: var(--navy); }
+.slip__header p { margin: 0.1rem 0 0; font-size: 0.8rem; color: var(--muted); }
+
+.slip__meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem 1rem;
+  margin-bottom: 1.2rem;
+}
+.slip__meta div { display: flex; flex-direction: column; font-size: 0.82rem; }
+.slip__meta span { color: var(--muted); font-size: 0.72rem; }
+.slip__meta strong { color: var(--ink); font-weight: 600; }
+
+.slip__table { width: 100%; border-collapse: collapse; font-size: 0.86rem; margin-bottom: 1.2rem; }
+.slip__table th, .slip__table td {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+.slip__table thead th { border-bottom: 2px solid var(--navy); color: var(--navy); }
+.slip__table tfoot td { font-weight: 700; border-top: 2px solid var(--navy); border-bottom: none; }
+
+.slip__summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--paper-dim);
+  border-radius: 7px;
+  padding: 0.9rem 1.1rem;
+}
+.slip__summary div { display: flex; flex-direction: column; font-size: 0.8rem; }
+.slip__summary span { color: var(--muted); font-size: 0.72rem; }
+.slip__summary strong { font-family: var(--font-display); font-size: 1.1rem; color: var(--navy); }
+
+.modal__actions { margin-top: 1.4rem; display: flex; justify-content: flex-end; }
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .stats__item { flex: 1 1 45%; }
+}
+
+@media (max-width: 560px) {
+  .topbar { padding: 1rem 1.25rem; }
+  fieldset.marks-grid { grid-template-columns: 1fr; }
+  .field-row { flex-direction: column; gap: 0; }
+  .slip__meta { grid-template-columns: 1fr; }
+}
+
+/* ---------- Print (result slip only) ---------- */
+@media print {
+  body * { visibility: hidden; }
+  .modal, .modal * { visibility: visible; }
+  .modal {
+    position: fixed;
+    inset: 0;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .modal__close, .modal__actions { display: none; }
+}
+
+</style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar__brand">
+      <span class="topbar__mark">Gb</span>
+      <div>
+        <h1>Gradebook</h1>
+        <p>Student result management system</p>
+      </div>
+    </div>
+    <div class="topbar__meta">
+      <label for="classSelect">Class</label>
+      <select id="classSelect">
+        <option value="">All classes</option>
+      </select>
+    </div>
+  </header>
+
+  <section class="stats" id="statsStrip">
+    <div class="stats__item">
+      <span class="stats__value" id="statTotal">0</span>
+      <span class="stats__label">Students</span>
+    </div>
+    <div class="stats__item">
+      <span class="stats__value" id="statAverage">–</span>
+      <span class="stats__label">Class average</span>
+    </div>
+    <div class="stats__item">
+      <span class="stats__value" id="statPassRate">–</span>
+      <span class="stats__label">Pass rate</span>
+    </div>
+    <div class="stats__item">
+      <span class="stats__value" id="statTopper">–</span>
+      <span class="stats__label">Top scorer</span>
+    </div>
+  </section>
+
+  <main class="layout">
+
+    <!-- ===== Add / Edit form ===== -->
+    <section class="panel form-panel" aria-labelledby="formTitle">
+      <div class="panel__head">
+        <h2 id="formTitle">Add student</h2>
+        <p id="formSubtitle">Enter details and marks out of 100 for each subject.</p>
+      </div>
+
+      <form id="studentForm" novalidate>
+        <input type="hidden" id="studentId">
+
+        <div class="field-row">
+          <div class="field">
+            <label for="rollNo">Roll no.</label>
+            <input type="text" id="rollNo" placeholder="e.g. 21A91A0501" required>
+          </div>
+          <div class="field">
+            <label for="studentClass">Class / Section</label>
+            <input type="text" id="studentClass" placeholder="e.g. CSE-2A" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="studentName">Student name</label>
+          <input type="text" id="studentName" placeholder="Full name" required>
+        </div>
+
+        <fieldset class="marks-grid">
+          <legend>Marks (out of 100)</legend>
+          <div class="field">
+            <label for="markMaths">Mathematics</label>
+            <input type="number" id="markMaths" min="0" max="100" required>
+          </div>
+          <div class="field">
+            <label for="markPhysics">Physics</label>
+            <input type="number" id="markPhysics" min="0" max="100" required>
+          </div>
+          <div class="field">
+            <label for="markChemistry">Chemistry</label>
+            <input type="number" id="markChemistry" min="0" max="100" required>
+          </div>
+          <div class="field">
+            <label for="markEnglish">English</label>
+            <input type="number" id="markEnglish" min="0" max="100" required>
+          </div>
+          <div class="field">
+            <label for="markCs">Computer Science</label>
+            <input type="number" id="markCs" min="0" max="100" required>
+          </div>
+        </fieldset>
+
+        <p class="form-error" id="formError" hidden></p>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn--primary" id="submitBtn">Save student</button>
+          <button type="button" class="btn btn--ghost" id="cancelEditBtn" hidden>Cancel edit</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ===== Results table ===== -->
+    <section class="panel table-panel" aria-labelledby="tableTitle">
+      <div class="panel__head panel__head--row">
+        <div>
+          <h2 id="tableTitle">Results</h2>
+          <p>Sorted list of every student on record.</p>
+        </div>
+        <div class="table-tools">
+          <input type="search" id="searchInput" placeholder="Search by name or roll no.">
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table id="resultsTable">
+          <thead>
+            <tr>
+              <th data-sort="roll">Roll no. <span class="sort-arrow"></span></th>
+              <th data-sort="name">Name <span class="sort-arrow"></span></th>
+              <th data-sort="class">Class <span class="sort-arrow"></span></th>
+              <th data-sort="total">Total <span class="sort-arrow"></span></th>
+              <th data-sort="percentage">%</th>
+              <th data-sort="grade">Grade</th>
+              <th>Result</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody">
+            <!-- rows injected by app.js -->
+          </tbody>
+        </table>
+        <p class="empty-state" id="emptyState">No students yet — add your first one on the left.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p>Gradebook stores everything locally in this browser — nothing leaves your machine.</p>
+  </footer>
+
+  <!-- ===== Result slip modal ===== -->
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="slipStudentName">
+      <button class="modal__close" id="modalClose" aria-label="Close">&times;</button>
+
+      <div class="slip" id="slipContent">
+        <div class="slip__header">
+          <span class="slip__mark">Gb</span>
+          <div>
+            <h3>Gradebook Academy</h3>
+            <p>Statement of Marks</p>
+          </div>
+        </div>
+
+        <div class="slip__meta">
+          <div><span>Name</span><strong id="slipStudentName"></strong></div>
+          <div><span>Roll no.</span><strong id="slipRoll"></strong></div>
+          <div><span>Class</span><strong id="slipClass"></strong></div>
+          <div><span>Issued</span><strong id="slipDate"></strong></div>
+        </div>
+
+        <table class="slip__table">
+          <thead>
+            <tr><th>Subject</th><th>Marks obtained</th><th>Max marks</th></tr>
+          </thead>
+          <tbody id="slipSubjects"></tbody>
+          <tfoot>
+            <tr><td>Total</td><td id="slipTotal"></td><td id="slipMax"></td></tr>
+          </tfoot>
+        </table>
+
+        <div class="slip__summary">
+          <div><span>Percentage</span><strong id="slipPercentage"></strong></div>
+          <div><span>Grade</span><strong id="slipGrade"></strong></div>
+          <div><span>Result</span><strong id="slipResult"></strong></div>
+        </div>
+      </div>
+
+      <div class="modal__actions">
+        <button class="btn btn--ghost" id="printSlipBtn">Print result slip</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  "use strict";
+
+  /* ---------- Config ---------- */
+  const STORAGE_KEY = "gradebook_students_v1";
+  const PASS_MARK_PER_SUBJECT = 33;   // fail a subject below this
+  const PASS_PERCENTAGE = 40;         // fail overall below this
+
+  const SUBJECTS = [
+    { key: "maths", label: "Mathematics", inputId: "markMaths" },
+    { key: "physics", label: "Physics", inputId: "markPhysics" },
+    { key: "chemistry", label: "Chemistry", inputId: "markChemistry" },
+    { key: "english", label: "English", inputId: "markEnglish" },
+    { key: "cs", label: "Computer Science", inputId: "markCs" }
+  ];
+  const MAX_PER_SUBJECT = 100;
+  const MAX_TOTAL = SUBJECTS.length * MAX_PER_SUBJECT;
+
+  /* ---------- State ---------- */
+  let students = loadStudents();
+  let sortState = { key: "roll", dir: "asc" };
+  let searchTerm = "";
+  let classFilter = "";
+  let editingId = null;
+
+  /* ---------- Elements ---------- */
+  const form = document.getElementById("studentForm");
+  const formTitle = document.getElementById("formTitle");
+  const formSubtitle = document.getElementById("formSubtitle");
+  const formError = document.getElementById("formError");
+  const submitBtn = document.getElementById("submitBtn");
+  const cancelEditBtn = document.getElementById("cancelEditBtn");
+  const studentIdField = document.getElementById("studentId");
+
+  const resultsBody = document.getElementById("resultsBody");
+  const emptyState = document.getElementById("emptyState");
+  const searchInput = document.getElementById("searchInput");
+  const classSelect = document.getElementById("classSelect");
+  const table = document.getElementById("resultsTable");
+
+  const statTotal = document.getElementById("statTotal");
+  const statAverage = document.getElementById("statAverage");
+  const statPassRate = document.getElementById("statPassRate");
+  const statTopper = document.getElementById("statTopper");
+
+  const modalBackdrop = document.getElementById("modalBackdrop");
+  const modalClose = document.getElementById("modalClose");
+  const printSlipBtn = document.getElementById("printSlipBtn");
+
+  /* ---------- Storage ---------- */
+  function loadStudents() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      console.error("Could not read saved results, starting fresh.", e);
+      return [];
+    }
+  }
+
+  function saveStudents() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(students));
+  }
+
+  /* ---------- Derived values ---------- */
+  function computeResult(marksByKey) {
+    const total = SUBJECTS.reduce((sum, s) => sum + (marksByKey[s.key] || 0), 0);
+    const percentage = (total / MAX_TOTAL) * 100;
+    const failedSubject = SUBJECTS.some((s) => (marksByKey[s.key] || 0) < PASS_MARK_PER_SUBJECT);
+    const pass = !failedSubject && percentage >= PASS_PERCENTAGE;
+    return { total, percentage, pass, grade: gradeFor(percentage, pass) };
+  }
+
+  function gradeFor(percentage, pass) {
+    if (!pass) return "F";
+    if (percentage >= 90) return "A+";
+    if (percentage >= 80) return "A";
+    if (percentage >= 70) return "B";
+    if (percentage >= 60) return "C";
+    if (percentage >= 50) return "D";
+    return "E";
+  }
+
+  /* ---------- Rendering ---------- */
+  function getVisibleStudents() {
+    let list = students.slice();
+
+    if (classFilter) {
+      list = list.filter((s) => s.studentClass === classFilter);
+    }
+
+    if (searchTerm) {
+      const term = searchTerm.trim().toLowerCase();
+      list = list.filter(
+        (s) => s.name.toLowerCase().includes(term) || s.roll.toLowerCase().includes(term)
+      );
+    }
+
+    const { key, dir } = sortState;
+    const factor = dir === "asc" ? 1 : -1;
+    list.sort((a, b) => {
+      let av, bv;
+      switch (key) {
+        case "name": av = a.name.toLowerCase(); bv = b.name.toLowerCase(); break;
+        case "class": av = a.studentClass.toLowerCase(); bv = b.studentClass.toLowerCase(); break;
+        case "total": av = a.result.total; bv = b.result.total; break;
+        case "percentage": av = a.result.percentage; bv = b.result.percentage; break;
+        case "grade": av = a.result.grade; bv = b.result.grade; break;
+        default: av = a.roll.toLowerCase(); bv = b.roll.toLowerCase();
+      }
+      if (av < bv) return -1 * factor;
+      if (av > bv) return 1 * factor;
+      return 0;
+    });
+
+    return list;
+  }
+
+  function renderClassOptions() {
+    const classes = Array.from(new Set(students.map((s) => s.studentClass))).sort();
+    const current = classSelect.value;
+    classSelect.innerHTML = '<option value="">All classes</option>';
+    classes.forEach((c) => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      classSelect.appendChild(opt);
+    });
+    if (classes.includes(current)) classSelect.value = current;
+  }
+
+  function renderTable() {
+    const visible = getVisibleStudents();
+    resultsBody.innerHTML = "";
+
+    visible.forEach((s) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(s.roll)}</td>
+        <td>${escapeHtml(s.name)}</td>
+        <td>${escapeHtml(s.studentClass)}</td>
+        <td>${s.result.total} / ${MAX_TOTAL}</td>
+        <td>${s.result.percentage.toFixed(1)}%</td>
+        <td>${s.result.grade}</td>
+        <td><span class="badge ${s.result.pass ? "badge--pass" : "badge--fail"}">${s.result.pass ? "Pass" : "Fail"}</span></td>
+        <td class="col-actions">
+          <div class="row-actions">
+            <button class="btn--text" data-action="view" data-id="${s.id}">Slip</button>
+            <button class="btn--text" data-action="edit" data-id="${s.id}">Edit</button>
+            <button class="btn--text btn--danger" data-action="delete" data-id="${s.id}">Delete</button>
+          </div>
+        </td>
+      `;
+      resultsBody.appendChild(tr);
+    });
+
+    emptyState.hidden = visible.length !== 0;
+    table.style.display = visible.length === 0 && students.length === 0 ? "none" : "table";
+
+    updateSortArrows();
+  }
+
+  function updateSortArrows() {
+    table.querySelectorAll("th[data-sort]").forEach((th) => {
+      const arrow = th.querySelector(".sort-arrow");
+      if (th.dataset.sort === sortState.key) {
+        arrow.textContent = sortState.dir === "asc" ? "▲" : "▼";
+      } else {
+        arrow.textContent = "";
+      }
+    });
+  }
+
+  function renderStats() {
+    statTotal.textContent = students.length;
+
+    if (students.length === 0) {
+      statAverage.textContent = "–";
+      statPassRate.textContent = "–";
+      statTopper.textContent = "–";
+      return;
+    }
+
+    const avg = students.reduce((sum, s) => sum + s.result.percentage, 0) / students.length;
+    const passCount = students.filter((s) => s.result.pass).length;
+    const topper = students.reduce((best, s) => (s.result.percentage > best.result.percentage ? s : best), students[0]);
+
+    statAverage.textContent = avg.toFixed(1) + "%";
+    statPassRate.textContent = Math.round((passCount / students.length) * 100) + "%";
+    statTopper.textContent = `${topper.name} (${topper.result.percentage.toFixed(1)}%)`;
+  }
+
+  function renderAll() {
+    renderClassOptions();
+    renderTable();
+    renderStats();
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  /* ---------- Form handling ---------- */
+  function resetForm() {
+    form.reset();
+    studentIdField.value = "";
+    editingId = null;
+    formTitle.textContent = "Add student";
+    formSubtitle.textContent = "Enter details and marks out of 100 for each subject.";
+    submitBtn.textContent = "Save student";
+    cancelEditBtn.hidden = true;
+    formError.hidden = true;
+  }
+
+  function startEdit(id) {
+    const student = students.find((s) => s.id === id);
+    if (!student) return;
+
+    editingId = id;
+    studentIdField.value = id;
+    document.getElementById("rollNo").value = student.roll;
+    document.getElementById("studentClass").value = student.studentClass;
+    document.getElementById("studentName").value = student.name;
+    SUBJECTS.forEach((s) => {
+      document.getElementById(s.inputId).value = student.marks[s.key];
+    });
+
+    formTitle.textContent = "Edit student";
+    formSubtitle.textContent = `Updating the record for ${student.name}.`;
+    submitBtn.textContent = "Update student";
+    cancelEditBtn.hidden = false;
+    formError.hidden = true;
+    document.getElementById("rollNo").focus();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function validateForm(data) {
+    if (!data.roll || !data.studentClass || !data.name) {
+      return "Please fill in roll number, class and name.";
+    }
+    for (const s of SUBJECTS) {
+      const val = data.marks[s.key];
+      if (Number.isNaN(val) || val < 0 || val > MAX_PER_SUBJECT) {
+        return `${s.label} marks must be a number between 0 and ${MAX_PER_SUBJECT}.`;
+      }
+    }
+    const duplicate = students.find(
+      (s) => s.roll.toLowerCase() === data.roll.toLowerCase() && s.id !== editingId
+    );
+    if (duplicate) {
+      return `Roll number "${data.roll}" is already in use.`;
+    }
+    return null;
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const marks = {};
+    SUBJECTS.forEach((s) => {
+      marks[s.key] = parseFloat(document.getElementById(s.inputId).value);
+    });
+
+    const data = {
+      roll: document.getElementById("rollNo").value.trim(),
+      studentClass: document.getElementById("studentClass").value.trim(),
+      name: document.getElementById("studentName").value.trim(),
+      marks
+    };
+
+    const errorMsg = validateForm(data);
+    if (errorMsg) {
+      formError.textContent = errorMsg;
+      formError.hidden = false;
+      return;
+    }
+
+    const result = computeResult(marks);
+
+    if (editingId) {
+      const student = students.find((s) => s.id === editingId);
+      Object.assign(student, data, { result });
+    } else {
+      students.push({
+        id: "s_" + Date.now() + "_" + Math.round(Math.random() * 1000),
+        ...data,
+        result
+      });
+    }
+
+    saveStudents();
+    resetForm();
+    renderAll();
+  });
+
+  cancelEditBtn.addEventListener("click", resetForm);
+
+  /* ---------- Table interactions ---------- */
+  resultsBody.addEventListener("click", function (e) {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+
+    const id = btn.dataset.id;
+    const action = btn.dataset.action;
+
+    if (action === "edit") {
+      startEdit(id);
+    } else if (action === "delete") {
+      const student = students.find((s) => s.id === id);
+      if (student && confirm(`Delete the record for ${student.name}? This can't be undone.`)) {
+        students = students.filter((s) => s.id !== id);
+        saveStudents();
+        if (editingId === id) resetForm();
+        renderAll();
+      }
+    } else if (action === "view") {
+      openSlip(id);
+    }
+  });
+
+  table.querySelectorAll("th[data-sort]").forEach((th) => {
+    th.addEventListener("click", function () {
+      const key = th.dataset.sort;
+      if (sortState.key === key) {
+        sortState.dir = sortState.dir === "asc" ? "desc" : "asc";
+      } else {
+        sortState = { key, dir: "asc" };
+      }
+      renderTable();
+    });
+  });
+
+  searchInput.addEventListener("input", function () {
+    searchTerm = searchInput.value;
+    renderTable();
+  });
+
+  classSelect.addEventListener("change", function () {
+    classFilter = classSelect.value;
+    renderTable();
+  });
+
+  /* ---------- Result slip modal ---------- */
+  function openSlip(id) {
+    const student = students.find((s) => s.id === id);
+    if (!student) return;
+
+    document.getElementById("slipStudentName").textContent = student.name;
+    document.getElementById("slipRoll").textContent = student.roll;
+    document.getElementById("slipClass").textContent = student.studentClass;
+    document.getElementById("slipDate").textContent = new Date().toLocaleDateString();
+
+    const slipSubjects = document.getElementById("slipSubjects");
+    slipSubjects.innerHTML = "";
+    SUBJECTS.forEach((s) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${s.label}</td><td>${student.marks[s.key]}</td><td>${MAX_PER_SUBJECT}</td>`;
+      slipSubjects.appendChild(tr);
+    });
+
+    document.getElementById("slipTotal").textContent = student.result.total;
+    document.getElementById("slipMax").textContent = MAX_TOTAL;
+    document.getElementById("slipPercentage").textContent = student.result.percentage.toFixed(1) + "%";
+    document.getElementById("slipGrade").textContent = student.result.grade;
+    document.getElementById("slipResult").textContent = student.result.pass ? "Pass" : "Fail";
+
+    modalBackdrop.hidden = false;
+  }
+
+  function closeSlip() {
+    modalBackdrop.hidden = true;
+  }
+
+  modalClose.addEventListener("click", closeSlip);
+  modalBackdrop.addEventListener("click", function (e) {
+    if (e.target === modalBackdrop) closeSlip();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !modalBackdrop.hidden) closeSlip();
+  });
+  printSlipBtn.addEventListener("click", function () {
+    window.print();
+  });
+
+  /* ---------- Init ---------- */
+  // Recompute results in case stored data predates a rule change.
+  students.forEach((s) => { s.result = computeResult(s.marks); });
+  saveStudents();
+  renderAll();
+})();
+
+</script>
+</body>
+</html>
